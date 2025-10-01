@@ -350,6 +350,8 @@ async function handleIncomingMessage() {
                     }
 
                 }
+                eventSource.emit(event_types.MESSAGE_UPDATED, { messageId: messageId, message: message });
+
                 toastr.success(`${matches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
