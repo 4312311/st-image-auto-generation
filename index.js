@@ -306,8 +306,12 @@ async function handleIncomingMessage() {
                 }
 
                 // 获取消息元素用于稍后更新
-                const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
+                //const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
+// 关键：提前定义messageId（在所有使用它的地方之前）
+const messageId = context.chat.length - 1; 
 
+// 用定义好的messageId获取消息元素
+const messageElement = $(`.mes[mesid="${messageId}"]`);
                 // 处理每个匹配的图片标签
                 for (let i = 0; i < matches.length; i++) {
                     const prompt = matches[i];
@@ -350,8 +354,9 @@ async function handleIncomingMessage() {
                     }
 
                 }
+                alert(0);
                 eventSource.emit(event_types.MESSAGE_UPDATED, { messageId: messageId, message: message });
-
+alert(1);
                 toastr.success(`${matches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
