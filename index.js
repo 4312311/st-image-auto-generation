@@ -10,11 +10,10 @@ import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
 import { addCopyToCodeBlocks } from "../../../../script.js"; 
 import { 
-    getRegexedString, 
-    regex_placement, 
-    messageFormatting, 
-    addCopyToCodeBlocks,
-    updateMessageBlock
+    updateMessageBlock, 
+    addCopyToCodeBlocks, 
+    eventSource, 
+    event_types  
 } from "../../../../script.js";
 
 // 扩展名称和路径
@@ -342,7 +341,7 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // 1. 匹配并替换 <pic> 标签（之前的逻辑不变）
+            // 1. 匹配并替换 <pic> 标签（逻辑不变）
         const matches = [...message.mes.matchAll(imgTagRegex)];
         const originalMatch = matches[0];
         if (!originalMatch) return;
@@ -351,24 +350,23 @@ async function handleIncomingMessage() {
         const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" class="st-generated-image" title="${prompt}" alt="${prompt}" />`;
         message.mes = message.mes.replace(originalTag, newImageTag);
 
-        // 2. 关键：手动调用正则插件的核心函数，处理状态栏正则
-        // 注意：placement 需对应状态栏正则的生效位置（通常是 AI 输出，即 regex_placement.AI_OUTPUT）
-        const placement = regex_placement.AI_OUTPUT; // 从 script.js 导入 regex_placement
-        message.mes = getRegexedString(message.mes, placement, {
-            characterOverride: message.name, // 传递角色名（插件可能需要）
-            isMarkdown: true,
-        });
-
-        // 3. 清除 display_text 缓存，确保 ST 用处理后的 mes
+        // 2. 清除 display_text 缓存（避免 ST 用旧内容）
         if (message.extra) {
             message.extra.display_text = null;
         }
 
-        // 4. 更新 UI（触发渲染）
+        // 3. 更新消息 UI（触发基础渲染）
         const messageId = context.chat.length - 1;
         updateMessageBlock(messageId, message);
 
-        // 5. 补充代码块功能
+        // 4. 关键：触发 ST 消息更新事件，通知正则插件重新处理
+        // （模拟“手动开关插件”的效果，正则插件会监听这个事件）
+        eventSource.emit(event_types.MESSAGE_MODIFIED, {
+            messageId: messageId,
+            message: message
+        });
+
+        // 5. 补充代码块功能（确保复制按钮生效）
         const messageElement = $(`.mes[mesid="${messageId}"]`);
         addCopyToCodeBlocks(messageElement);
 
