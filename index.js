@@ -4,7 +4,7 @@
 //You'll likely need to import extension_settings, getContext, and loadExtensionSettings from extensions.js
 import { extension_settings, getContext } from "../../../extensions.js";
 //You'll likely need to import some other functions from the main script
-import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock, parseMarkdown } from "../../../../script.js";
+import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock } from "../../../../script.js";
 import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
@@ -333,25 +333,19 @@ async function handleIncomingMessage() {
                         }
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
-    if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-        // 1. 匹配原始 <pic> 标签并替换为 <img> 标签（和之前一样）
-        const originalTag = message.mes.match(imgTagRegex)[0];
-        const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" class="st-generated-image" >`;
-        message.mes = message.mes.replace(originalTag, newImageTag);
+                        if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
+                            // Find the original image tag in the message
+                            const originalTag = message.mes.match(imgTagRegex)[0];
+                            // Replace it with an actual image tag
+                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
+                            message.mes = message.mes.replace(originalTag, newImageTag);
 
-        // 2. 关键修复：用 ST 原生解析函数处理 message.mes（含代码块）
-        // 此时 parsedHtml 已包含 <pre><code> 格式的代码块
-        const parsedHtml = parseMarkdown(message.mes); 
+                            // Update the message display using updateMessageBlock
+                            updateMessageBlock(context.chat.length - 1, message);
 
-        // 3. 给 message 对象添加“已解析的HTML”属性（ST 原生识别）
-        // 部分 ST 版本的 updateMessageBlock 会优先使用 parsedContent 而非原始 mes
-        message.parsedContent = parsedHtml; 
-
-        // 4. 调用 updateMessageBlock 更新 UI（此时会用 parsedContent 渲染）
-        updateMessageBlock(context.chat.length - 1, message);
-
-        await context.saveChat();
-    }
+                            // Save the chat
+                            await context.saveChat();
+                        }
                     }
 
                 }
@@ -363,4 +357,3 @@ async function handleIncomingMessage() {
         }, 0); //防阻塞UI渲染
     }
 }
-
