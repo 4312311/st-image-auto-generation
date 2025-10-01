@@ -343,10 +343,7 @@ async function handleIncomingMessage() {
         const prompt = originalMatch[1]; 
 
         // 步骤2：构造符合 ST 渲染规范的 <img> 标签（加 class 适配样式）
-        const newImageTag = `<img 
-            src="${imageUrl}" 
-            prompt="${prompt}" 
-        />`;
+        const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" />`;
 
         // 步骤3：修改 message.mes（替换 <pic> 为 <img>）
         message.mes = message.mes.replace(originalTag, newImageTag);
