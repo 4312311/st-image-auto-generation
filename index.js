@@ -8,7 +8,7 @@ import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock } f
 import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
-
+import { addCopyToCodeBlocks } from "../../../../script.js"; 
 // 扩展名称和路径
 const extensionName = "st-image-auto-generation";
 // /scripts/extensions/third-party
@@ -334,21 +334,42 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // Find the original image tag in the message
-                            const originalTag = message.mes.match(imgTagRegex)[0];
-                            // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
-                            message.mes = message.mes.replace(originalTag, newImageTag);
+                            // 步骤1：匹配原始 <pic> 标签（注意：用 matchAll 避免多次匹配时的索引偏移）
+        const matches = [...message.mes.matchAll(imgTagRegex)];
+        // 取第一个匹配的标签（若需处理多标签，可循环）
+        const originalMatch = matches[0];
+        if (!originalMatch) return; // 无匹配标签则退出
+        const originalTag = originalMatch[0]; // 完整的 <pic> 标签
+        const prompt = originalMatch[1]; // 提取的 prompt
 
-                            // Update the message display using updateMessageBlock
-                            //updateMessageBlock(context.chat.length - 1, message);
-                                 // 2. 关键：用 appendMediaToMessage 触发格式重渲染
-                    // 该函数会自动解析 message.mes 的 Markdown（包括代码块）
+        // 步骤2：构造符合 ST 渲染规范的 <img> 标签（加 class 适配样式）
+        const newImageTag = `<img 
+            src="${imageUrl}" 
+            prompt="${prompt}" 
+            class="st-generated-image" 
+            alt="Auto-generated image: ${prompt}"  // 加 alt 适配无障碍
+            title="${prompt}"  // 保留 prompt 到 title
+        />`;
+
+        // 步骤3：修改 message.mes（替换 <pic> 为 <img>）
+        message.mes = message.mes.replace(originalTag, newImageTag);
+
+        // 步骤4：关键！删除 extra.display_text（避免 updateMessageBlock 优先用旧文本）
+        if (message.extra && message.extra.display_text) {
+            delete message.extra.display_text;
+            console.log('[ST-Image-Auto-Gen] Deleted old display_text to force Markdown reparse');
+        }
+
+        // 步骤5：调用 ST 原生 updateMessageBlock，触发全量渲染
+        // 无需传 rerenderMessage，默认 true，会自动调用 messageFormatting 解析代码块
+        updateMessageBlock(context.chat.length - 1, message);
+
+        // 步骤6：保存聊天记录（同步修改后的 mes）
+        await context.saveChat();
+
+        // 步骤7：额外保障：手动调用 addCopyToCodeBlocks（确保代码块复制按钮正常）
         const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
-        appendMediaToMessage(message, messageElement); // 复用原生函数，避免自己解析
-
-                            // Save the chat
-                            await context.saveChat();
+        addCopyToCodeBlocks(messageElement);
                         }
                     }
 
