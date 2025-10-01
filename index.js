@@ -341,7 +341,11 @@ async function handleIncomingMessage() {
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
-                            updateMessageBlock(context.chat.length - 1, message);
+                            //updateMessageBlock(context.chat.length - 1, message);
+                                 // 2. 关键：用 appendMediaToMessage 触发格式重渲染
+                    // 该函数会自动解析 message.mes 的 Markdown（包括代码块）
+        const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
+        appendMediaToMessage(message, messageElement); // 复用原生函数，避免自己解析
 
                             // Save the chat
                             await context.saveChat();
