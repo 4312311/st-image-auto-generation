@@ -9,6 +9,14 @@ import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
 import { addCopyToCodeBlocks } from "../../../../script.js"; 
+import { 
+    getRegexedString, 
+    regex_placement, 
+    messageFormatting, 
+    addCopyToCodeBlocks,
+    updateMessageBlock
+} from "../../../../script.js";
+
 // 扩展名称和路径
 const extensionName = "st-image-auto-generation";
 // /scripts/extensions/third-party
@@ -334,36 +342,38 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // 步骤1：匹配原始 <pic> 标签（注意：用 matchAll 避免多次匹配时的索引偏移）
+                            // 1. 匹配并替换 <pic> 标签（之前的逻辑不变）
         const matches = [...message.mes.matchAll(imgTagRegex)];
-        // 取第一个匹配的标签（若需处理多标签，可循环）
         const originalMatch = matches[0];
-        if (!originalMatch) return; 
-        const originalTag = originalMatch[0]; 
-        const prompt = originalMatch[1]; 
-
-        // 步骤2：构造符合 ST 渲染规范的 <img> 标签（加 class 适配样式）
-        const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" />`;
-
-        // 步骤3：修改 message.mes（替换 <pic> 为 <img>）
+        if (!originalMatch) return;
+        const originalTag = originalMatch[0];
+        const prompt = originalMatch[1];
+        const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" class="st-generated-image" title="${prompt}" alt="${prompt}" />`;
         message.mes = message.mes.replace(originalTag, newImageTag);
 
-        // 步骤4：关键！删除 extra.display_text（避免 updateMessageBlock 优先用旧文本）
-        if (message.extra && message.extra.display_text) {
-            delete message.extra.display_text;
-            console.log('[ST-Image-Auto-Gen] Deleted old display_text to force Markdown reparse');
+        // 2. 关键：手动调用正则插件的核心函数，处理状态栏正则
+        // 注意：placement 需对应状态栏正则的生效位置（通常是 AI 输出，即 regex_placement.AI_OUTPUT）
+        const placement = regex_placement.AI_OUTPUT; // 从 script.js 导入 regex_placement
+        message.mes = getRegexedString(message.mes, placement, {
+            characterOverride: message.name, // 传递角色名（插件可能需要）
+            isMarkdown: true,
+        });
+
+        // 3. 清除 display_text 缓存，确保 ST 用处理后的 mes
+        if (message.extra) {
+            message.extra.display_text = null;
         }
 
-        // 步骤5：调用 ST 原生 updateMessageBlock，触发全量渲染
-        // 无需传 rerenderMessage，默认 true，会自动调用 messageFormatting 解析代码块
-        updateMessageBlock(context.chat.length - 1, message);
+        // 4. 更新 UI（触发渲染）
+        const messageId = context.chat.length - 1;
+        updateMessageBlock(messageId, message);
 
-        // 步骤6：保存聊天记录（同步修改后的 mes）
-        await context.saveChat();
-
-        // 步骤7：额外保障：手动调用 addCopyToCodeBlocks（确保代码块复制按钮正常）
-        const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
+        // 5. 补充代码块功能
+        const messageElement = $(`.mes[mesid="${messageId}"]`);
         addCopyToCodeBlocks(messageElement);
+
+        // 6. 保存聊天
+        await context.saveChat();
                         }
                     }
 
