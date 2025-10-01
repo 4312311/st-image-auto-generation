@@ -8,8 +8,7 @@ import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock } f
 import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
-// 补充导入禁用和启用扩展的函数
-import { extension_settings, getContext, enableExtension, disableExtension } from "../../../extensions.js";
+
 // 扩展名称和路径
 const extensionName = "st-image-auto-generation";
 // /scripts/extensions/third-party
@@ -335,24 +334,17 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // 找到消息中的原始图片标签并替换
-        const originalTag = message.mes.match(imgTagRegex)[0];
-        const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
-        message.mes = message.mes.replace(originalTag, newImageTag);
+                            // Find the original image tag in the message
+                            const originalTag = message.mes.match(imgTagRegex)[0];
+                            // Replace it with an actual image tag
+                            const newImageTag = `<img src="${imageUrl}" >`;
+                            message.mes = message.mes.replace(originalTag, newImageTag);
 
-        // 更新消息显示
-        updateMessageBlock(context.chat.length - 1, message);
+                            // Update the message display using updateMessageBlock
+                            updateMessageBlock(context.chat.length - 1, message);
 
-        // 关键修复：重新触发正则插件以处理状态栏
-        // 1. 先禁用正则插件
-        await disableExtension('regex', false);
-        // 2. 短暂延迟确保禁用生效
-        await new Promise(resolve => setTimeout(resolve, 100));
-        // 3. 重新启用正则插件，使其重新处理所有消息
-        await enableExtension('regex', false);
-
-        // 保存聊天记录
-        await context.saveChat();
+                            // Save the chat
+                            await context.saveChat();
                         }
                     }
 
