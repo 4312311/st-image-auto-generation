@@ -8,12 +8,8 @@ import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock } f
 import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
-import { addCopyToCodeBlocks } from "../../../../script.js"; 
-// 导入必要的变量和函数（如果未导入）
-import { this_chid, characters } from "../../../../script.js";
-// 假设Regex插件的核心处理函数在engine.js中，路径需根据实际情况调整
-import { runRegexScript } from "../../../extensions/regex/engine.js";
-
+// 补充导入禁用和启用扩展的函数
+import { extension_settings, getContext, enableExtension, disableExtension } from "../../../extensions.js";
 // 扩展名称和路径
 const extensionName = "st-image-auto-generation";
 // /scripts/extensions/third-party
@@ -200,33 +196,6 @@ $(function () {
         });
     })();
 });
-
-
-// 新增：重新应用所有启用的正则脚本到指定消息
-function reapplyRegexToMessage(message, messageIndex) {
-    try {
-        // 获取所有需要应用的正则脚本（全局+角色范围）
-        const regexScripts = [
-            // 全局正则脚本（过滤已禁用的）
-            ...(extension_settings.regex || []).filter(script => !script.disabled),
-            // 角色范围正则脚本（过滤已禁用的）
-            ...(characters[this_chid]?.data?.extensions?.regex_scripts || []).filter(script => !script.disabled)
-        ];
-
-        // 对当前消息应用每个正则脚本
-        regexScripts.forEach(script => {
-            // 调用Regex插件的核心处理函数（需与插件实现匹配）
-            // 注意：runRegexScript的参数可能需要调整，参考Regex插件的实际实现
-            runRegexScript(script, message, messageIndex);
-        });
-
-        // 再次更新消息UI，显示正则处理后的结果（包括状态栏）
-        updateMessageBlock(messageIndex, message);
-        console.log(`[${extensionName}] 已重新应用正则到消息，状态栏应正常显示`);
-    } catch (error) {
-        console.error(`[${extensionName}] 重新应用正则失败:`, error);
-    }
-}
 // 获取消息角色
 function getMesRole() {
     // 确保对象路径存在
@@ -337,12 +306,8 @@ async function handleIncomingMessage() {
                 }
 
                 // 获取消息元素用于稍后更新
-                //const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
-// 关键：提前定义messageId（在所有使用它的地方之前）
-const messageId = context.chat.length - 1; 
+                const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
 
-// 用定义好的messageId获取消息元素
-const messageElement = $(`.mes[mesid="${messageId}"]`);
                 // 处理每个匹配的图片标签
                 for (let i = 0; i < matches.length; i++) {
                     const prompt = matches[i];
@@ -370,25 +335,28 @@ const messageElement = $(`.mes[mesid="${messageId}"]`);
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                                   // Find the original image tag in the message
-                            const originalTag = message.mes.match(imgTagRegex)[0];
-                            // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" >`;
-                            message.mes = message.mes.replace(originalTag, newImageTag);
+                            // 找到消息中的原始图片标签并替换
+        const originalTag = message.mes.match(imgTagRegex)[0];
+        const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
+        message.mes = message.mes.replace(originalTag, newImageTag);
 
-                            // Update the message display using updateMessageBlock
-                            updateMessageBlock(context.chat.length - 1, message);
+        // 更新消息显示
+        updateMessageBlock(context.chat.length - 1, message);
 
-        // 3. 主动触发Regex插件重新处理当前消息，修复状态栏正则
-        reapplyRegexToMessage(message, context.chat.length - 1);
+        // 关键修复：重新触发正则插件以处理状态栏
+        // 1. 先禁用正则插件
+        await disableExtension('regex', false);
+        // 2. 短暂延迟确保禁用生效
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // 3. 重新启用正则插件，使其重新处理所有消息
+        await enableExtension('regex', false);
 
-                            // Save the chat
-                            await context.saveChat();
+        // 保存聊天记录
+        await context.saveChat();
                         }
                     }
 
                 }
- 
                 toastr.success(`${matches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
