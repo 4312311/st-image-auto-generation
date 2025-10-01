@@ -9,12 +9,6 @@ import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
 import { addCopyToCodeBlocks } from "../../../../script.js"; 
-import { 
-    updateMessageBlock, 
-    addCopyToCodeBlocks, 
-    eventSource, 
-    event_types  
-} from "../../../../script.js";
 
 // 扩展名称和路径
 const extensionName = "st-image-auto-generation";
@@ -341,37 +335,17 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-            // 1. 匹配并替换 <pic> 标签（逻辑不变）
-        const matches = [...message.mes.matchAll(imgTagRegex)];
-        const originalMatch = matches[0];
-        if (!originalMatch) return;
-        const originalTag = originalMatch[0];
-        const prompt = originalMatch[1];
-        const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" class="st-generated-image" title="${prompt}" alt="${prompt}" />`;
-        message.mes = message.mes.replace(originalTag, newImageTag);
+                                   // Find the original image tag in the message
+                            const originalTag = message.mes.match(imgTagRegex)[0];
+                            // Replace it with an actual image tag
+                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" >`;
+                            message.mes = message.mes.replace(originalTag, newImageTag);
 
-        // 2. 清除 display_text 缓存（避免 ST 用旧内容）
-        if (message.extra) {
-            message.extra.display_text = null;
-        }
+                            // Update the message display using updateMessageBlock
+                            updateMessageBlock(context.chat.length - 1, message);
 
-        // 3. 更新消息 UI（触发基础渲染）
-        const messageId = context.chat.length - 1;
-        updateMessageBlock(messageId, message);
-
-        // 4. 关键：触发 ST 消息更新事件，通知正则插件重新处理
-        // （模拟“手动开关插件”的效果，正则插件会监听这个事件）
-        eventSource.emit(event_types.MESSAGE_MODIFIED, {
-            messageId: messageId,
-            message: message
-        });
-
-        // 5. 补充代码块功能（确保复制按钮生效）
-        const messageElement = $(`.mes[mesid="${messageId}"]`);
-        addCopyToCodeBlocks(messageElement);
-
-        // 6. 保存聊天
-        await context.saveChat();
+                            // Save the chat
+                            await context.saveChat();
                         }
                     }
 
