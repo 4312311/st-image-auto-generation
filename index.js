@@ -338,17 +338,14 @@ async function handleIncomingMessage() {
         const matches = [...message.mes.matchAll(imgTagRegex)];
         // 取第一个匹配的标签（若需处理多标签，可循环）
         const originalMatch = matches[0];
-        if (!originalMatch) return; // 无匹配标签则退出
-        const originalTag = originalMatch[0]; // 完整的 <pic> 标签
-        const prompt = originalMatch[1]; // 提取的 prompt
+        if (!originalMatch) return; 
+        const originalTag = originalMatch[0]; 
+        const prompt = originalMatch[1]; 
 
         // 步骤2：构造符合 ST 渲染规范的 <img> 标签（加 class 适配样式）
         const newImageTag = `<img 
             src="${imageUrl}" 
             prompt="${prompt}" 
-            class="st-generated-image" 
-            alt="Auto-generated image: ${prompt}"  // 加 alt 适配无障碍
-            title="${prompt}"  // 保留 prompt 到 title
         />`;
 
         // 步骤3：修改 message.mes（替换 <pic> 为 <img>）
