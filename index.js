@@ -338,7 +338,7 @@ async function handleIncomingMessage() {
                             const originalTag = message.mes.match(imgTagRegex)[0];
                             // Replace it with an actual image tag
                             const newImageTag = `<img src="${imageUrl}" promot="${prompt}">`;
-                            alert(originalTag +' '+newImageTag)
+                 
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
