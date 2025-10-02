@@ -279,6 +279,7 @@ async function handleIncomingMessage() {
     // 使用正则表达式匹配
     const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
     // 保存完整匹配结果（包含完整标签和捕获组）
+    alert(imgTagRegex)
     let matches;
     if (imgTagRegex.global) {
         matches = [...message.mes.matchAll(imgTagRegex)]; // 全局匹配时获取所有完整match对象
@@ -286,6 +287,7 @@ async function handleIncomingMessage() {
         const singleMatch = message.mes.match(imgTagRegex);
         matches = singleMatch ? [singleMatch] : []; // 非全局匹配时处理单个结果
     }
+    alert(matches)
 
     console.log(`[${extensionName}] 匹配到的完整标签:`, matches.map(m => m[0]));
     if (matches.length > 0) {
