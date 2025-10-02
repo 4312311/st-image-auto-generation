@@ -346,7 +346,7 @@ async function handleIncomingMessage() {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
                             // 使用初始匹配保存的原始标签进行替换，无需重新匹配
-                            const newImageTag = `<img src="${imageUrl}" promot="${prompt}">`;
+                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}">`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // 更新消息显示
