@@ -306,7 +306,7 @@ async function handleIncomingMessage() {
 
                 // 获取消息元素用于稍后更新
                 const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
-                alert(matches.length)
+
                 // 处理每个匹配的图片标签
                 for (let i = 0; i < matches.length; i++) {
                     const prompt = matches[i];
@@ -335,12 +335,9 @@ async function handleIncomingMessage() {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
                             // Find the original image tag in the message
-                            alert(imgTagRegex)
                             const originalTag = message.mes.match(imgTagRegex)[0];
-                                            alert(originalTag)
-
                             // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" >`;
+                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
