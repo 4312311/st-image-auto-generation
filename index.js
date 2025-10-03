@@ -287,6 +287,8 @@ async function handleIncomingMessage() {
         matches = singleMatch ? [singleMatch] : []; // 非全局匹配时处理单个结果
     }
   //alert(matches)
+                    toastr.success(`开始生成图片`);
+
     console.log(`[${extensionName}] 匹配到的完整标签:`, matches.map(m => m[0]));
     if (matches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
