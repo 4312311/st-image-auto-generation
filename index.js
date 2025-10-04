@@ -353,12 +353,26 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // 直接使用预存的原始标签进行替换
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}">`;
-                            message.mes = message.mes.replace(originalTag, newImageTag);
-                            // 更新消息显示
-                            updateMessageBlock(context.chat.length - 1, message);
-                            // 保存聊天
+                            // 1. 创建新的img元素（保留提示词作为标题和alt）
+                            const imgElement = $(`<img src="${imageUrl}" title="${prompt}" alt="${prompt}" class="auto-generated-image">`);
+                            
+                            // 2. 找到消息DOM中对应的<pic>标签节点
+                            // 注意：需要从原始标签文本创建选择器（转义特殊字符）
+                            const escapedTag = originalTag.replace(/[!"#$%&'()*+,.\/:;<=>?@[\]^_`{|}~]/g, '\\$&');
+                            const picElement = messageElement.find(`:contains("${escapedTag}")`).filter(function() {
+                                // 精确匹配包含原始标签的文本节点的父元素
+                                return $(this).html().includes(originalTag);
+                            });
+
+                            if (picElement.length) {
+                                // 3. 直接替换DOM中的<pic>标签为img元素（不影响其他HTML）
+                                picElement.html(function(index, html) {
+                                    return html.replace(originalTag, imgElement.prop('outerHTML'));
+                                });
+                            }
+
+                            // 4. 同步更新message.mes（确保保存时内容正确，不影响已渲染DOM）
+                            message.mes = message.mes.replace(originalTag, imgElement.prop('outerHTML'));
                             await context.saveChat();
                         }
                     }
