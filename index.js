@@ -250,9 +250,6 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventDa
         toastr.error(`提示词注入错误: ${error}`);
     }
 });
-
-// 监听消息接收事件
-eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
 // 监听消息接收事件
 eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
 async function handleIncomingMessage() {
@@ -353,39 +350,12 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                              // 1. 先更新消息数据模型（保持与视图同步）
-                            const originalTag = message.mes.match(imgTagRegex)[0];
-                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}" class="generated-image">`;
+                            // 直接使用预存的原始标签进行替换
+                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
-
-                            // 2. 同步更新message.extra（SillyTavern依赖此数据渲染图片控件）
-                            if (!message.extra) message.extra = {};
-                            if (!Array.isArray(message.extra.image_swipes)) {
-                                message.extra.image_swipes = [];
-                            }
-                            message.extra.image_swipes.push(imageUrl);
-                            message.extra.image = imageUrl; // 主图指向当前生成的图片
-                            message.extra.title = prompt;
-
-                            // 3. 局部更新DOM，保留其他HTML美化内容
-                            const escapedTag = originalTag.replace(/[!"#$%&'()*+,.\/:;<=>?@[\]^_`{|}~]/g, '\\$&');
-                            const targetElement = messageElement.find(`:contains("${escapedTag}")`).filter(function() {
-                                return $(this).html().includes(originalTag);
-                            });
-
-                            if (targetElement.length) {
-                                // 替换标签为图片HTML
-                                targetElement.html(targetElement.html().replace(originalTag, newImageTag));
-                                // 触发SillyTavern的图片加载逻辑（模拟原生渲染行为）
-                                targetElement.find('img.generated-image').on('load', function() {
-                                    messageElement.find('.message-content').trigger('rendered');
-                                });
-                            }
-
-                            // 4. 调用轻量更新方法，只刷新媒体部分（避免全量HTML替换）
-                            appendMediaToMessage(message, messageElement);
-                            
-                            // 5. 保存聊天记录（触发内部状态同步）
+                            // 更新消息显示
+                            updateMessageBlock(context.chat.length - 1, message);
+                            // 保存聊天
                             await context.saveChat();
                         }
                     }
