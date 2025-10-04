@@ -78,7 +78,34 @@ function findGlobalRegexIdByName(scriptName) {
     // 返回找到的ID或null
     return matchedScript ? matchedScript.id : null;
 }
+function simulateRegexToggle(regexId) {
+    // 延迟执行，确保DOM已渲染（SillyTavern消息渲染可能有延迟）
+    setTimeout(() => {
+        // 直接通过ID定位正则容器（基于用户提供的DOM结构）
+        const scriptContainer = document.getElementById(regexId);
+        if (!scriptContainer) {
+            console.warn(`[${extensionName}] 未找到ID为${regexId}的正则脚本容器`);
+            return;
+        }
 
+        // 验证容器类型
+        if (!scriptContainer.classList.contains('regex-script-label')) {
+            console.warn(`[${extensionName}] ID为${regexId}的元素不是正则脚本容器`);
+            return;
+        }
+
+        // 查找开关按钮（基于用户提供的class="disable_regex"）
+        const toggleCheckbox = scriptContainer.querySelector('.disable_regex');
+        if (!toggleCheckbox) {
+            console.warn(`[${extensionName}] 未找到ID为${regexId}的正则开关`);
+            return;
+        }
+
+        // 触发点击事件
+        toggleCheckbox.click();
+        console.log(`[${extensionName}] 已模拟点击正则脚本${regexId}的开关`);
+    }, 5000); // 100ms延迟确保DOM就绪
+}
 function toggleGlobalRegexState(regexId) {
     // 校验全局正则数组是否存在
     if (!Array.isArray(extension_settings.regex)) {
@@ -244,6 +271,18 @@ $(function () {
                 updateUI();
             }, 200);
         });
+
+
+              const targetRegexName = "状态栏美化"; // 替换为你的正则脚本名称
+                const targetRegexId = findGlobalRegexIdByName(targetRegexName);
+                
+                if (targetRegexId) {
+                    // 2. 模拟点击开关（切换状态）
+                    simulateRegexToggle(targetRegexId);
+                } else {
+                    console.warn(`[${extensionName}] 未找到名称为"${targetRegexName}"的全局正则脚本`);
+                }
+        
     })();
 });
 // 获取消息角色
@@ -411,8 +450,18 @@ async function handleIncomingMessage() {
                         }
                     }
                 }
-             alert(findGlobalRegexIdByName('状态栏美化'));
-        toggleGlobalRegexState(findGlobalRegexIdByName('状态栏美化'));
+
+                // 1. 先通过正则名称查找ID（这里假设要操作的正则名称是"状态栏美化"，可根据实际修改）
+                const targetRegexName = "状态栏美化"; // 替换为你的正则脚本名称
+                const targetRegexId = findGlobalRegexIdByName(targetRegexName);
+                
+                if (targetRegexId) {
+                    // 2. 模拟点击开关（切换状态）
+                    simulateRegexToggle(targetRegexId);
+                } else {
+                    console.warn(`[${extensionName}] 未找到名称为"${targetRegexName}"的全局正则脚本`);
+                }
+                
                 toastr.success(`${tagMatches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
