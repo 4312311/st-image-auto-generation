@@ -195,7 +195,6 @@ $(function () {
         });
     })();
 });
-
 // 获取消息角色
 function getMesRole() {
     // 确保对象路径存在
@@ -276,20 +275,11 @@ async function handleIncomingMessage() {
         return;
     }
 
-    // 使用正则表达式匹配
+    // 使用正则表达式search
     const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
-    // 保存完整匹配结果（包含完整标签和捕获组）
-    let matches;
-    if (imgTagRegex.global) {
-        matches = [...message.mes.matchAll(imgTagRegex)]; // 全局匹配时获取所有完整match对象
-    } else {
-        const singleMatch = message.mes.match(imgTagRegex);
-        matches = singleMatch ? [singleMatch] : []; // 非全局匹配时处理单个结果
-    }
-  //alert(matches)
-                    toastr.success(`开始生成图片`);
-
-    console.log(`[${extensionName}] 匹配到的完整标签:`, matches.map(m => m[0]));
+    // const testRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
+    let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)].map(match => match[1]) : [message.mes.match(imgTagRegex)[1]]; // 只取捕获组的内容
+    console.log(imgTagRegex, matches)
     if (matches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
         setTimeout(async () => {
@@ -297,6 +287,8 @@ async function handleIncomingMessage() {
                 toastr.info(`Generating ${matches.length} images...`);
                 const insertType = extension_settings[extensionName].insertType;
 
+
+                // 在当前消息中插入图片
                 // 初始化message.extra
                 if (!message.extra) {
                     message.extra = {};
@@ -317,21 +309,18 @@ async function handleIncomingMessage() {
 
                 // 处理每个匹配的图片标签
                 for (let i = 0; i < matches.length; i++) {
-                    const match = matches[i];
-                    const prompt = match[1]; // 从捕获组获取prompt
-                    const originalTag = match[0]; // 从完整匹配结果获取原始标签
+                    const prompt = matches[i];
 
-                    // 调用生图接口
                     // @ts-ignore
                     const result = await SlashCommandParser.commands['sd'].callback({ quiet: insertType === INSERT_TYPE.NEW_MESSAGE ? 'false' : 'true' }, prompt);
-                    
+                    // 统一插入到extra里
                     if (insertType === INSERT_TYPE.INLINE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
                             // 添加图片到swipes数组
                             message.extra.image_swipes.push(imageUrl);
 
-                            // 设置主图片
+                            // 设置第一张图片为主图片，或更新为最新生成的图片
                             message.extra.image = imageUrl;
                             message.extra.title = prompt;
                             message.extra.inline_image = true;
@@ -345,23 +334,26 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // 使用初始匹配保存的原始标签进行替换，无需重新匹配
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}">`;
+                            // Find the original image tag in the message
+                            const originalTag = message.mes.match(imgTagRegex)[0];
+                            // Replace it with an actual image tag
+                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
-                            // 更新消息显示
+                            // Update the message display using updateMessageBlock
                             updateMessageBlock(context.chat.length - 1, message);
 
-                            // 保存聊天
+                            // Save the chat
                             await context.saveChat();
                         }
                     }
+
                 }
                 toastr.success(`${matches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
                 console.error('Image generation error:', error);
             }
-        }, 0); // 防阻塞UI渲染
+        }, 0); //防阻塞UI渲染
     }
 }
