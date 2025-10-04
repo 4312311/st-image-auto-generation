@@ -369,12 +369,12 @@ async function handleIncomingMessage() {
         await context.saveChat();
 
         // 6. 可选：触发消息更新事件，确保其他组件同步
-        eventSource.dispatchEvent(new CustomEvent(event_types.MESSAGE_UPDATED, {
-            detail: {
-                messageId: context.chat.length - 1,
-                message: message
-            }
-        }));
+        // eventSource.dispatchEvent(new CustomEvent(event_types.MESSAGE_UPDATED, {
+        //     detail: {
+        //         messageId: context.chat.length - 1,
+        //         message: message
+        //     }
+        // }));
                         }
                     }
                 }
