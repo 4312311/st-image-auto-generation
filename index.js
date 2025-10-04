@@ -84,6 +84,8 @@ function simulateRegexToggle(regexId) {
         // 直接通过ID定位正则容器（基于用户提供的DOM结构）
         const scriptContainer = document.getElementById(regexId);
         if (!scriptContainer) {
+                            alert(`[${extensionName}] 未找到ID为${regexId}的正则脚本容器`)
+
             console.warn(`[${extensionName}] 未找到ID为${regexId}的正则脚本容器`);
             return;
         }
@@ -91,6 +93,7 @@ function simulateRegexToggle(regexId) {
         // 验证容器类型
         if (!scriptContainer.classList.contains('regex-script-label')) {
             console.warn(`[${extensionName}] ID为${regexId}的元素不是正则脚本容器`);
+            alert(`[${extensionName}] ID为${regexId}的元素不是正则脚本容器`);
             return;
         }
 
@@ -98,13 +101,17 @@ function simulateRegexToggle(regexId) {
         const toggleCheckbox = scriptContainer.querySelector('.disable_regex');
         if (!toggleCheckbox) {
             console.warn(`[${extensionName}] 未找到ID为${regexId}的正则开关`);
+            alert(`[${extensionName}] 未找到ID为${regexId}的正则开关`);
             return;
         }
 
         // 触发点击事件
         toggleCheckbox.click();
         console.log(`[${extensionName}] 已模拟点击正则脚本${regexId}的开关`);
-    }, 5000); // 100ms延迟确保DOM就绪
+
+         alert(`[${extensionName}] 已模拟点击正则脚本${regexId}的开关`);
+
+    }, 8000); // 100ms延迟确保DOM就绪
 }
 function toggleGlobalRegexState(regexId) {
     // 校验全局正则数组是否存在
@@ -275,7 +282,7 @@ $(function () {
 
               const targetRegexName = "状态栏美化"; // 替换为你的正则脚本名称
                 const targetRegexId = findGlobalRegexIdByName(targetRegexName);
-                
+                alert(targetRegexId)
                 if (targetRegexId) {
                     // 2. 模拟点击开关（切换状态）
                     simulateRegexToggle(targetRegexId);
