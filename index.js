@@ -8,6 +8,7 @@ import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock } f
 import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
+import { getRegexedString, regex_placement } from '../../../extensions/regex/index.js'; // 引入正则核心函数
 
 // 扩展名称和路径
 const extensionName = "st-image-auto-generation";
@@ -350,13 +351,30 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // 直接使用预存的原始标签进行替换
-                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
-                            message.mes = message.mes.replace(originalTag, newImageTag);
-                            // 更新消息显示
-                            updateMessageBlock(context.chat.length - 1, message);
-                            // 保存聊天
-                            await context.saveChat();
+                            // 1. 替换原始标签为img标签
+        const newImageTag = `<img src="${imageUrl}" promot="${prompt}">`;
+        let modifiedMes = message.mes.replace(originalTag, newImageTag);
+
+        // 2. 手动触发正则重新处理（关键步骤）
+        // 场景指定为AI输出，确保所有AI相关的正则脚本生效
+        modifiedMes = getRegexedString(modifiedMes, regex_placement.AI_OUTPUT);
+
+        // 3. 更新消息内容
+        message.mes = modifiedMes;
+
+        // 4. 更新UI显示
+        updateMessageBlock(context.chat.length - 1, message);
+
+        // 5. 保存聊天记录
+        await context.saveChat();
+
+        // 6. 可选：触发消息更新事件，确保其他组件同步
+        eventSource.dispatchEvent(new CustomEvent(event_types.MESSAGE_UPDATED, {
+            detail: {
+                messageId: context.chat.length - 1,
+                message: message
+            }
+        }));
                         }
                     }
                 }
