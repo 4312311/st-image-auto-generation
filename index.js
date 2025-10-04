@@ -355,10 +355,6 @@ async function handleIncomingMessage() {
         const newImageTag = `<img src="${imageUrl}" promot="${prompt}">`;
         let modifiedMes = message.mes.replace(originalTag, newImageTag);
 
-        // 2. 手动触发正则重新处理（关键步骤）
-        // 场景指定为AI输出，确保所有AI相关的正则脚本生效
-        modifiedMes = getRegexedString(modifiedMes, regex_placement.AI_OUTPUT);
-
         // 3. 更新消息内容
         message.mes = modifiedMes;
 
@@ -367,6 +363,10 @@ async function handleIncomingMessage() {
 
         // 5. 保存聊天记录
         await context.saveChat();
+
+        // 2. 手动触发正则重新处理（关键步骤）
+        // 场景指定为AI输出，确保所有AI相关的正则脚本生效
+        modifiedMes = getRegexedString(modifiedMes, regex_placement.AI_OUTPUT);
 
         // 6. 可选：触发消息更新事件，确保其他组件同步
         // eventSource.dispatchEvent(new CustomEvent(event_types.MESSAGE_UPDATED, {
