@@ -8,7 +8,7 @@ import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock } f
 import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
-import { getRegexedString, regex_placement } from '../../../extensions/regex/index.js'; // 引入正则核心函数
+import { getRegexedString, regex_placement } from '../../../extensions/regex/engine.js';
 
 // 扩展名称和路径
 const extensionName = "st-image-auto-generation";
