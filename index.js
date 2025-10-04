@@ -102,7 +102,7 @@ async function createSettings(settingsHtml) {
         saveSettingsDebounced();
     });
 
-    // 添加提示词注入设置的事件处理
+    // 添加提示词注入设置的事件 处理
     $('#prompt_injection_enabled').on('change', function () {
         extension_settings[extensionName].promptInjection.enabled = $(this).prop('checked');
         saveSettingsDebounced();
@@ -363,22 +363,17 @@ async function handleIncomingMessage() {
 
         // 5. 保存聊天记录
         await context.saveChat();
-  toastr.success("开始正则触发")
+
+
+
+                        }
+                    }
+                }
+                  toastr.success("开始正则触发")
         // 2. 手动触发正则重新处理（关键步骤）
         // 场景指定为AI输出，确保所有AI相关的正则脚本生效
         modifiedMes = getRegexedString(modifiedMes, regex_placement.AI_OUTPUT);
   toastr.success("结束正则触发")
-
-        // 6. 可选：触发消息更新事件，确保其他组件同步
-        // eventSource.dispatchEvent(new CustomEvent(event_types.MESSAGE_UPDATED, {
-        //     detail: {
-        //         messageId: context.chat.length - 1,
-        //         message: message
-        //     }
-        // }));
-                        }
-                    }
-                }
                 toastr.success(`${tagMatches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
