@@ -196,8 +196,27 @@ $(function () {
         });
      
         alert(extension_settings.regex.map(script => script.id))
+
+        
+toggleGlobalRegex('77a627b9-4e0d-4b67-a822-f8be116aa4bc',false)
+        
     })();
 });
+
+function toggleGlobalRegex(regexId, enable) {
+    // 查找对应ID的全局正则脚本
+    const targetScript = extension_settings.regex?.find(script => script.id === regexId);
+    if (!targetScript) {
+        console.warn(`未找到ID为 ${regexId} 的全局正则脚本`);
+        return false;
+    }
+    // 修改disabled属性（enable为true时，disabled设为false，反之亦然）
+    targetScript.disabled = !enable;
+    // 保存设置（延迟保存，避免频繁操作）
+    saveSettingsDebounced();
+    console.log(`全局正则脚本 ${regexId} 已${enable ? '启用' : '禁用'}`);
+    return true;
+}
 // 获取消息角色
 function getMesRole() {
     // 确保对象路径存在
