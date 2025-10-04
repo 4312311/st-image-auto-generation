@@ -388,8 +388,8 @@ async function handleIncomingMessage() {
     }
 
     if(tagMatches.length == 0){
-        alert(imgTagRegex)
-        alert(message.mes.matchAll(imgTagRegex))
+        alert(imgTagRegex + "  "+imgTagRegex.global)
+                alert(message.mes)
     }
     if (tagMatches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
