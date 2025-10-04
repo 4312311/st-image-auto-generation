@@ -52,7 +52,32 @@ function updateUI() {
         $('#prompt_injection_depth').val(extension_settings[extensionName].promptInjection.depth);
     }
 }
-
+/**
+ * 根据名称查找全局正则脚本的ID
+ * @param {string} scriptName - 要查找的正则脚本名称
+ * @returns {string|null} 匹配的全局正则ID，未找到则返回null
+ */
+function findGlobalRegexIdByName(scriptName) {
+    // 处理输入名称（统一小写+去空格，避免匹配差异）
+    const targetName = scriptName.toLowerCase().trim();
+    
+    // 校验全局正则数组是否存在
+    if (!Array.isArray(extension_settings.regex)) {
+        console.warn('全局正则脚本数组不存在');
+        return null;
+    }
+    
+    // 遍历全局正则数组，匹配名称
+    const matchedScript = extension_settings.regex.find(script => {
+        // 脚本名称可能为undefined，需先判断
+        if (typeof script.scriptName !== 'string') return false;
+        // 统一处理脚本名称后比较
+        return script.scriptName.toLowerCase().trim() === targetName;
+    });
+    
+    // 返回找到的ID或null
+    return matchedScript ? matchedScript.id : null;
+}
 // 加载设置
 async function loadSettings() {
     extension_settings[extensionName] = extension_settings[extensionName] || {};
@@ -142,7 +167,36 @@ function onExtensionButtonClick() {
     if ($('#rm_extensions_block').hasClass('closedDrawer')) {
         extensionsDrawer.trigger('click');
     }
+/**
+ * 切换全局正则脚本的启用/禁用状态（取反当前状态）
+ * @param {string} regexId - 全局正则脚本的ID
+ * @returns {boolean} 操作是否成功（找到并切换状态）
+ */
+function toggleGlobalRegexState(regexId) {
+    // 校验全局正则数组是否存在
+    if (!Array.isArray(extension_settings.regex)) {
+        console.warn('全局正则脚本数组不存在');
+        return false;
+    }
 
+    // 根据ID查找目标正则脚本
+    const targetScript = extension_settings.regex.find(script => script.id === regexId);
+    if (!targetScript) {
+        console.warn(`未找到ID为 ${regexId} 的全局正则脚本`);
+        return false;
+    }
+
+    // 取反当前状态（disabled为true表示禁用，取反后启用，反之亦然）
+    const originalState = targetScript.disabled;
+    targetScript.disabled = !originalState;
+
+    // 保存设置（延迟保存避免频繁操作）
+    saveSettingsDebounced();
+
+    // 输出状态变更信息
+    console.log(`全局正则脚本 ${regexId} 已${targetScript.disabled ? '禁用' : '启用'}`);
+    return true;
+}
     // 等待抽屉打开后滚动到我们的设置容器
     setTimeout(() => {
         // 找到我们的设置容器
