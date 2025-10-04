@@ -195,14 +195,36 @@ $(function () {
             }, 200);
         });
      
-        alert(extension_settings.regex.map(script => script.id))
+        alert(findGlobalRegexIdByName('状态栏美化'))
+
+ 
 
         
-toggleGlobalRegex('77a627b9-4e0d-4b67-a822-f8be116aa4bc',false)
+toggleGlobalRegex(findGlobalRegexIdByName('状态栏美化'),false)
         
     })();
 });
-
+function findGlobalRegexIdByName(scriptName) {
+    // 处理输入名称（统一小写+去空格，避免匹配差异）
+    const targetName = scriptName.toLowerCase().trim();
+    
+    // 校验全局正则数组是否存在
+    if (!Array.isArray(extension_settings.regex)) {
+        console.warn('全局正则脚本数组不存在');
+        return null;
+    }
+    
+    // 遍历全局正则数组，匹配名称
+    const matchedScript = extension_settings.regex.find(script => {
+        // 脚本名称可能为undefined，需先判断
+        if (typeof script.scriptName !== 'string') return false;
+        // 统一处理脚本名称后比较
+        return script.scriptName.toLowerCase().trim() === targetName;
+    });
+    
+    // 返回找到的ID或null
+    return matchedScript ? matchedScript.id : null;
+}
 function toggleGlobalRegex(regexId, enable) {
     // 查找对应ID的全局正则脚本
     const targetScript = extension_settings.regex?.find(script => script.id === regexId);
