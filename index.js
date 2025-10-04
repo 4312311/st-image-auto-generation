@@ -194,6 +194,8 @@ $(function () {
                 updateUI();
             }, 200);
         });
+     
+        alert(extension_settings.regex.map(script => script.id))
     })();
 });
 // 获取消息角色
