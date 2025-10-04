@@ -8,7 +8,6 @@ import { saveSettingsDebounced, eventSource, event_types, updateMessageBlock } f
 import { appendMediaToMessage } from "../../../../script.js";
 import { regexFromString } from '../../../utils.js';
 import { SlashCommandParser } from "../../../slash-commands/SlashCommandParser.js";
-import { getRegexedString, regex_placement } from '../../../extensions/regex/engine.js';
 
 // 扩展名称和路径
 const extensionName = "st-image-auto-generation";
@@ -102,7 +101,7 @@ async function createSettings(settingsHtml) {
         saveSettingsDebounced();
     });
 
-    // 添加提示词注入设置的事件 处理
+    // 添加提示词注入设置的事件处理
     $('#prompt_injection_enabled').on('change', function () {
         extension_settings[extensionName].promptInjection.enabled = $(this).prop('checked');
         saveSettingsDebounced();
@@ -194,76 +193,8 @@ $(function () {
                 updateUI();
             }, 200);
         });
-     
-        alert(findGlobalRegexIdByName('状态栏美化'))
-
- 
-toggleGlobalRegexState(findGlobalRegexIdByName('状态栏美化'))
-        
-        
     })();
 });
-
-function toggleGlobalRegexState(regexId) {
-    // 校验全局正则数组是否存在
-    if (!Array.isArray(extension_settings.regex)) {
-        console.warn('全局正则脚本数组不存在');
-        return false;
-    }
-
-    // 根据ID查找目标正则脚本
-    const targetScript = extension_settings.regex.find(script => script.id === regexId);
-    if (!targetScript) {
-        console.warn(`未找到ID为 ${regexId} 的全局正则脚本`);
-        return false;
-    }
-
-    // 取反当前状态（disabled为true表示禁用，取反后启用，反之亦然）
-    const originalState = targetScript.disabled;
-    targetScript.disabled = !originalState;
-
-    // 保存设置（延迟保存避免频繁操作）
-    saveSettingsDebounced();
-
-    // 输出状态变更信息
-    console.log(`全局正则脚本 ${regexId} 已${targetScript.disabled ? '禁用' : '启用'}`);
-    return true;
-}
-function findGlobalRegexIdByName(scriptName) {
-    // 处理输入名称（统一小写+去空格，避免匹配差异）
-    const targetName = scriptName.toLowerCase().trim();
-    
-    // 校验全局正则数组是否存在
-    if (!Array.isArray(extension_settings.regex)) {
-        console.warn('全局正则脚本数组不存在');
-        return null;
-    }
-    
-    // 遍历全局正则数组，匹配名称
-    const matchedScript = extension_settings.regex.find(script => {
-        // 脚本名称可能为undefined，需先判断
-        if (typeof script.scriptName !== 'string') return false;
-        // 统一处理脚本名称后比较
-        return script.scriptName.toLowerCase().trim() === targetName;
-    });
-    
-    // 返回找到的ID或null
-    return matchedScript ? matchedScript.id : null;
-}
-function toggleGlobalRegex(regexId, enable) {
-    // 查找对应ID的全局正则脚本
-    const targetScript = extension_settings.regex?.find(script => script.id === regexId);
-    if (!targetScript) {
-        console.warn(`未找到ID为 ${regexId} 的全局正则脚本`);
-        return false;
-    }
-    // 修改disabled属性（enable为true时，disabled设为false，反之亦然）
-    targetScript.disabled = !enable;
-    // 保存设置（延迟保存，避免频繁操作）
-    saveSettingsDebounced();
-    console.log(`全局正则脚本 ${regexId} 已${enable ? '启用' : '禁用'}`);
-    return true;
-}
 // 获取消息角色
 function getMesRole() {
     // 确保对象路径存在
@@ -419,29 +350,18 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // 1. 替换原始标签为img标签
-        const newImageTag = `<img src="${imageUrl}" promot="${prompt}">`;
-        let modifiedMes = message.mes.replace(originalTag, newImageTag);
-
-        // 3. 更新消息内容
-        message.mes = modifiedMes;
-
-        // 4. 更新UI显示
-        updateMessageBlock(context.chat.length - 1, message);
-
-        // 5. 保存聊天记录
-        await context.saveChat();
-
-
-
+                            // 直接使用预存的原始标签进行替换
+                            const newImageTag = `<img src="${imageUrl}"  promot="${prompt}">`;
+                            message.mes = message.mes.replace(originalTag, newImageTag);
+                            // 更新消息显示
+                            updateMessageBlock(context.chat.length - 1, message);
+                            // 保存聊天
+                            await context.saveChat();
                         }
                     }
                 }
-                  toastr.success("开始正则触发")
-        // 2. 手动触发正则重新处理（关键步骤）
-        // 场景指定为AI输出，确保所有AI相关的正则脚本生效
-        modifiedMes = getRegexedString(modifiedMes, regex_placement.AI_OUTPUT);
-  toastr.success("结束正则触发")
+             alert(findGlobalRegexIdByName('状态栏美化'))
+        toggleGlobalRegexState(findGlobalRegexIdByName('状态栏美化'))
                 toastr.success(`${tagMatches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
@@ -450,3 +370,5 @@ async function handleIncomingMessage() {
         }, 0); // 防阻塞UI渲染
     }
 }
+
+
