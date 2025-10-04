@@ -253,6 +253,8 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventDa
 
 // 监听消息接收事件
 eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
+// 监听消息接收事件
+eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
 async function handleIncomingMessage() {
     // 确保设置对象存在
     if (!extension_settings[extensionName] ||
@@ -275,18 +277,39 @@ async function handleIncomingMessage() {
         return;
     }
 
-    // 使用正则表达式search
+    // 使用正则表达式一次性匹配所有结果
     const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
-    // const testRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
-    let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)].map(match => match[1]) : [message.mes.match(imgTagRegex)[1]]; // 只取捕获组的内容
-    console.log(imgTagRegex, matches)
-    if (matches.length > 0) {
+    // 存储所有匹配的标签和提示词（完整标签+捕获组内容）
+    const tagMatches = [];
+    
+    // 一次性获取所有匹配项
+    if (imgTagRegex.global) {
+        // 全局匹配时使用matchAll获取所有结果
+        const allMatches = message.mes.matchAll(imgTagRegex);
+        for (const match of allMatches) {
+            // match[0]是完整标签，match[1]是提示词（第一个捕获组）
+            tagMatches.push({
+                tag: match[0],
+                prompt: match[1]
+            });
+        }
+    } else {
+        // 非全局匹配时只取第一个结果
+        const singleMatch = message.mes.match(imgTagRegex);
+        if (singleMatch) {
+            tagMatches.push({
+                tag: singleMatch[0],
+                prompt: singleMatch[1]
+            });
+        }
+    }
+
+    if (tagMatches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
         setTimeout(async () => {
             try {
-                toastr.info(`Generating ${matches.length} images...`);
+                toastr.info(`Generating ${tagMatches.length} images...`);
                 const insertType = extension_settings[extensionName].insertType;
-
 
                 // 在当前消息中插入图片
                 // 初始化message.extra
@@ -307,53 +330,44 @@ async function handleIncomingMessage() {
                 // 获取消息元素用于稍后更新
                 const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
 
-                // 处理每个匹配的图片标签
-                for (let i = 0; i < matches.length; i++) {
-                    const prompt = matches[i];
-
+                // 循环预存的匹配结果数组
+                for (let i = 0; i < tagMatches.length; i++) {
+                    const { tag: originalTag, prompt } = tagMatches[i];
                     // @ts-ignore
                     const result = await SlashCommandParser.commands['sd'].callback({ quiet: insertType === INSERT_TYPE.NEW_MESSAGE ? 'false' : 'true' }, prompt);
-                    // 统一插入到extra里
+                    
                     if (insertType === INSERT_TYPE.INLINE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
                             // 添加图片到swipes数组
                             message.extra.image_swipes.push(imageUrl);
-
                             // 设置第一张图片为主图片，或更新为最新生成的图片
                             message.extra.image = imageUrl;
                             message.extra.title = prompt;
                             message.extra.inline_image = true;
-
                             // 更新UI
                             appendMediaToMessage(message, messageElement);
-
                             // 保存聊天记录
                             await context.saveChat();
                         }
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // Find the original image tag in the message
-                            const originalTag = message.mes.match(imgTagRegex)[0];
-                            // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
+                            // 直接使用预存的原始标签进行替换
+                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}">`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
-
-                            // Update the message display using updateMessageBlock
+                            // 更新消息显示
                             updateMessageBlock(context.chat.length - 1, message);
-
-                            // Save the chat
+                            // 保存聊天
                             await context.saveChat();
                         }
                     }
-
                 }
-                toastr.success(`${matches.length} images generated successfully`);
+                toastr.success(`${tagMatches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
                 console.error('Image generation error:', error);
             }
-        }, 0); //防阻塞UI渲染
+        }, 0); // 防阻塞UI渲染
     }
 }
