@@ -198,12 +198,37 @@ $(function () {
         alert(findGlobalRegexIdByName('状态栏美化'))
 
  
-
+toggleGlobalRegexState(findGlobalRegexIdByName('状态栏美化'))
         
-toggleGlobalRegex(findGlobalRegexIdByName('状态栏美化'),false)
         
     })();
 });
+
+function toggleGlobalRegexState(regexId) {
+    // 校验全局正则数组是否存在
+    if (!Array.isArray(extension_settings.regex)) {
+        console.warn('全局正则脚本数组不存在');
+        return false;
+    }
+
+    // 根据ID查找目标正则脚本
+    const targetScript = extension_settings.regex.find(script => script.id === regexId);
+    if (!targetScript) {
+        console.warn(`未找到ID为 ${regexId} 的全局正则脚本`);
+        return false;
+    }
+
+    // 取反当前状态（disabled为true表示禁用，取反后启用，反之亦然）
+    const originalState = targetScript.disabled;
+    targetScript.disabled = !originalState;
+
+    // 保存设置（延迟保存避免频繁操作）
+    saveSettingsDebounced();
+
+    // 输出状态变更信息
+    console.log(`全局正则脚本 ${regexId} 已${targetScript.disabled ? '禁用' : '启用'}`);
+    return true;
+}
 function findGlobalRegexIdByName(scriptName) {
     // 处理输入名称（统一小写+去空格，避免匹配差异）
     const targetName = scriptName.toLowerCase().trim();
