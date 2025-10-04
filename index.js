@@ -363,10 +363,11 @@ async function handleIncomingMessage() {
 
         // 5. 保存聊天记录
         await context.saveChat();
-
+  toastr.success("开始正则触发")
         // 2. 手动触发正则重新处理（关键步骤）
         // 场景指定为AI输出，确保所有AI相关的正则脚本生效
         modifiedMes = getRegexedString(modifiedMes, regex_placement.AI_OUTPUT);
+  toastr.success("结束正则触发")
 
         // 6. 可选：触发消息更新事件，确保其他组件同步
         // eventSource.dispatchEvent(new CustomEvent(event_types.MESSAGE_UPDATED, {
