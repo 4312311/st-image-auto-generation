@@ -402,7 +402,7 @@ async function handleIncomingMessage() {
                             // Find the original image tag in the message
                             const originalTag = message.mes.match(imgTagRegex)[0];
                             // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" datetime='202510052258'>`;
+                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" current_datetime='202510052258'>`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
