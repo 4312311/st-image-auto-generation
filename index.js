@@ -441,7 +441,7 @@ async function handleIncomingMessage() {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
                             // 直接使用预存的原始标签进行替换
-                            const newImageTag = `<img src="${imageUrl}"  promot="${prompt}">`;
+                            const newImageTag = `<img src="${imageUrl}"  prompt="${prompt}">`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
                             // 更新消息显示
                             updateMessageBlock(context.chat.length - 1, message);
