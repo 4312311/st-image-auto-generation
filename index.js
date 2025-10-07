@@ -216,71 +216,6 @@ function getMesRole() {
     }
 }
 
-/**
- * 根据名称查找全局正则脚本的ID
- * @param {string} scriptName - 要查找的正则脚本名称
- * @returns {string|null} 匹配的全局正则ID，未找到则返回null
- */
-function findGlobalRegexIdByName(scriptName) {
-    // 处理输入名称（统一小写+去空格，避免匹配差异）
-    const targetName = scriptName.toLowerCase().trim();
-    
-    // 校验全局正则数组是否存在
-    if (!Array.isArray(extension_settings.regex)) {
-        console.warn('全局正则脚本数组不存在');
-        return null;
-    }
-    
-    // 遍历全局正则数组，匹配名称
-    const matchedScript = extension_settings.regex.find(script => {
-        // 脚本名称可能为undefined，需先判断
-        if (typeof script.scriptName !== 'string') return false;
-        // 统一处理脚本名称后比较
-        return script.scriptName.toLowerCase().trim() === targetName;
-    });
-    
-    // 返回找到的ID或null
-    return matchedScript ? matchedScript.id : null;
-}
-function simulateRegexToggle(regexId) {
-    // 延迟执行，确保DOM已渲染（SillyTavern消息渲染可能有延迟）
-    setTimeout(() => {
-        // 直接通过ID定位正则容器（基于用户提供的DOM结构）
-        const scriptContainer = document.getElementById(regexId);
-        if (!scriptContainer) {
-                          //  alert(`[${extensionName}] 未找到ID为${regexId}的正则脚本容器`)
-
-            console.warn(`[${extensionName}] 未找到ID为${regexId}的正则脚本容器`);
-            return;
-        }
-
-        // 验证容器类型
-        if (!scriptContainer.classList.contains('regex-script-label')) {
-            console.warn(`[${extensionName}] ID为${regexId}的元素不是正则脚本容器`);
-            //alert(`[${extensionName}] ID为${regexId}的元素不是正则脚本容器`);
-            return;
-        }
-
-        // 查找开关按钮（基于用户提供的class="disable_regex"）
-        const toggleCheckbox = scriptContainer.querySelector('.disable_regex');
-        if (!toggleCheckbox) {
-            console.warn(`[${extensionName}] 未找到ID为${regexId}的正则开关`);
-            //alert(`[${extensionName}] 未找到ID为${regexId}的正则开关`);
-            return;
-        }
-
-        // 触发点击事件
-        toggleCheckbox.click();
-        console.log(`[${extensionName}] 已模拟点击正则脚本${regexId}的开关`);
-
-        // alert(`[${extensionName}] 已模拟点击正则脚本${regexId}的开关`);
-        toastr.success(`[${extensionName}] 已模拟点击正则脚本${regexId}的开关`);
-
-    }, 200); // 100ms延迟确保DOM就绪
-}
-
-
-
 // 监听CHAT_COMPLETION_PROMPT_READY事件以注入提示词
 eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventData) {
     try {
@@ -317,14 +252,7 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventDa
 });
 
 // 监听消息接收事件
-//eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
-// 监听消息接收事件 - 立即捕获触发时的上下文，再延迟执行
- eventSource.on(event_types.MESSAGE_RECEIVED, () => {
-     // 事件触发时立即保存当前聊天索引（快照）
-     //const targetMessageIndex = context.chat.length - 1; 
-     setTimeout(() => handleIncomingMessage, 500);
- });
-
+eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
 async function handleIncomingMessage() {
     // 确保设置对象存在
     if (!extension_settings[extensionName] ||
@@ -347,14 +275,23 @@ async function handleIncomingMessage() {
         return;
     }
 
-    // 使用正则表达式search
     const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
-	alert(imgTagRegex)
-    // const testRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
-    let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)].map(match => match[1]) : [message.mes.match(imgTagRegex)[1]]; // 只取捕获组的内容
-    alert(imgTagRegex, matches)
-	alert(matches.length)
-    if (matches.length > 0) {
+ // 封装匹配逻辑为函数，便于重复调用
+ const getMatches = (content, regex) => {
+     return regex.global 
+         ? [...content.matchAll(regex)].map(match => match[1]) 
+         : [content.match(regex)?.[1]].filter(Boolean); // 增加?.和filter避免匹配失败时的undefined
+ };
+ let matches = getMatches(message.mes, imgTagRegex);
+ // 首次匹配为空时，延迟500ms重试一次
+ if (matches.length === 0) {
+	 alert(0)
+     await new Promise(resolve => setTimeout(resolve, 500)); // 阻塞等待500ms，不影响外层异步逻辑
+     matches = getMatches(message.mes, imgTagRegex); // 重试匹配，覆盖原matches值
+ }
+ console.log(imgTagRegex, matches);
+		 alert(matches.length)
+	if (matches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
         setTimeout(async () => {
             try {
@@ -411,7 +348,7 @@ async function handleIncomingMessage() {
                             // Find the original image tag in the message
                             const originalTag = message.mes.match(imgTagRegex)[0];
                             // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" current_datetime='202510052258'>`;
+                            const newImageTag = `<img src="${imageUrl}" title="${prompt}" alt="${prompt}">`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
@@ -423,18 +360,6 @@ async function handleIncomingMessage() {
                     }
 
                 }
-				
-				 // 1. 先通过正则名称查找ID（这里假设要操作的正则名称是"状态栏美化"，可根据实际修改）
-                const targetRegexName = "状态栏美化"; // 替换为你的正则脚本名称
-                const targetRegexId = findGlobalRegexIdByName(targetRegexName);
-                
-                if (targetRegexId) {
-                    // 2. 模拟点击开关（切换状态）
-                    simulateRegexToggle(targetRegexId);
-                } else {
-                    alert(`[${extensionName}] 未找到名称为"${targetRegexName}"的全局正则脚本`);
-                }
-				
                 toastr.success(`${matches.length} images generated successfully`);
             } catch (error) {
                 toastr.error(`Image generation error: ${error}`);
