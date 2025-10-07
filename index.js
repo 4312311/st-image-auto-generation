@@ -322,7 +322,7 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventDa
  eventSource.on(event_types.MESSAGE_RECEIVED, () => {
      // 事件触发时立即保存当前聊天索引（快照）
      //const targetMessageIndex = context.chat.length - 1; 
-     setTimeout(() => handleIncomingMessage(), 500);
+     setTimeout(() => handleIncomingMessage, 500);
  });
 
 async function handleIncomingMessage() {
@@ -349,9 +349,11 @@ async function handleIncomingMessage() {
 
     // 使用正则表达式search
     const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
+	alert(imgTagRegex)
     // const testRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
     let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)].map(match => match[1]) : [message.mes.match(imgTagRegex)[1]]; // 只取捕获组的内容
-    console.log(imgTagRegex, matches)
+    alert(imgTagRegex, matches)
+	alert(matches.length)
     if (matches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
         setTimeout(async () => {
