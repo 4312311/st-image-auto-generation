@@ -252,7 +252,12 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventDa
 });
 
 // 监听消息接收事件
-eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
+//eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
+eventSource.on(event_types.MESSAGE_RECEIVED, () => setTimeout(handleIncomingMessage, 500));
+
+
+
+
 async function handleIncomingMessage() {
     // 确保设置对象存在
     if (!extension_settings[extensionName] ||
