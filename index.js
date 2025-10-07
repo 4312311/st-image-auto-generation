@@ -317,7 +317,14 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventDa
 });
 
 // 监听消息接收事件
-eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
+//eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
+// 监听消息接收事件 - 立即捕获触发时的上下文，再延迟执行
+ eventSource.on(event_types.MESSAGE_RECEIVED, () => {
+     // 事件触发时立即保存当前聊天索引（快照）
+     //const targetMessageIndex = context.chat.length - 1; 
+     setTimeout(() => handleIncomingMessage(), 500);
+ });
+
 async function handleIncomingMessage() {
     // 确保设置对象存在
     if (!extension_settings[extensionName] ||
