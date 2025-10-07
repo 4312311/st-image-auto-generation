@@ -252,12 +252,7 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventDa
 });
 
 // 监听消息接收事件
-//eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
-eventSource.on(event_types.MESSAGE_RECEIVED, () => setTimeout(handleIncomingMessage, 500));
-
-
-
-
+eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
 async function handleIncomingMessage() {
     // 确保设置对象存在
     if (!extension_settings[extensionName] ||
@@ -280,23 +275,12 @@ async function handleIncomingMessage() {
         return;
     }
 
+    // 使用正则表达式search
     const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
- // 封装匹配逻辑为函数，便于重复调用
- const getMatches = (content, regex) => {
-     return regex.global 
-         ? [...content.matchAll(regex)].map(match => match[1]) 
-         : [content.match(regex)?.[1]].filter(Boolean); // 增加?.和filter避免匹配失败时的undefined
- };
- let matches = getMatches(message.mes, imgTagRegex);
- // 首次匹配为空时，延迟500ms重试一次
- if (matches.length === 0) {
-	 alert(0)
-     await new Promise(resolve => setTimeout(resolve, 500)); // 阻塞等待500ms，不影响外层异步逻辑
-     matches = getMatches(message.mes, imgTagRegex); // 重试匹配，覆盖原matches值
- }
- console.log(imgTagRegex, matches);
-		 alert(matches.length)
-	if (matches.length > 0) {
+    // const testRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
+    let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)].map(match => match[1]) : [message.mes.match(imgTagRegex)[1]]; // 只取捕获组的内容
+    console.log(imgTagRegex, matches)
+    if (matches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
         setTimeout(async () => {
             try {
@@ -353,7 +337,7 @@ async function handleIncomingMessage() {
                             // Find the original image tag in the message
                             const originalTag = message.mes.match(imgTagRegex)[0];
                             // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}"> current_datetime='202510052258'`;
+                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt},dmzz">`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
