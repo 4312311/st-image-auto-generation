@@ -1,4 +1,4 @@
-@@ -1,436 +1,436 @@
+
 // The main script for the extension
 // The following are examples of some basic extension functionality
 
