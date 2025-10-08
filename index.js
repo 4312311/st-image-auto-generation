@@ -408,20 +408,22 @@ async function handleIncomingMessage() {
                             // Find the original image tag in the message
                             const originalTag = message.mes.match(imgTagRegex)[0];
                             // Replace it with an actual image tag
-// 生成3个随机小写字母（a-z）
-const randomLetters = Array.from({ length: 3 }, () => 
-  String.fromCharCode(Math.floor(Math.random() * 26) + 97) // 97是'a'的ASCII码
-);
 
-// 组合成包含3个随机字母和1个'j'的数组，然后随机打乱顺序（确保'j'位置不固定）
-const chars = [...randomLetters, 'j'].sort(() => Math.random() - 0.5);
+							// 1. 生成5位字符数组：包含1个固定'z' + 4个随机小写字母（a-z，可含重复）
+const chars = [
+  'z', // 固定字母z
+  ...Array.from({ length: 4 }, () => String.fromCharCode(Math.floor(Math.random() * 26) + 97)) // 4个随机小写字母
+];
 
-// 拼接成4位字符串（格式：3个随机字母+1个'j'，位置随机）
-const randomChars = chars.join('');
+// 2. 随机打乱数组顺序，确保z的位置不固定
+chars.sort(() => Math.random() - 0.5);
 
-// 生成最终的img标签
-const newImageTag = `<img src="${imageUrl}" prompt="${prompt}dmzz" >`;
-                            message.mes = message.mes.replace(originalTag, newImageTag);
+// 3. 拼接成"dmzz_5位字符"格式（如dmzz_zhjuy、dmzz_cdyjz）
+const dmzzStr = `dmzz_${chars.join('')}`;
+
+// 4. 生成最终img标签
+const newImageTag = `<img src="${imageUrl}" prompt="${prompt},${dmzzStr}" >`;
+message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
                             updateMessageBlock(context.chat.length - 1, message);
