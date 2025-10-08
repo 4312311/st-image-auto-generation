@@ -342,8 +342,8 @@ async function handleIncomingMessage() {
     }
 
     // 使用正则表达式search
-   // const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
-const imgTagRegex = /<[\s\r\n]*img(?!(?:(?!>).)*?current_datetime\s*=\s*"[^"]*2025100522[^"]*")[^>]*?prompt\s*=\s*"([^"]*)"[^>]*?>/gis;
+    const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
+//const imgTagRegex = /<[\s\r\n]*img(?!(?:(?!>).)*?current_datetime\s*=\s*"[^"]*2025100522[^"]*")[^>]*?prompt\s*=\s*"([^"]*)"[^>]*?>/gis;
 	let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)].map(match => match[1]) : [message.mes.match(imgTagRegex)[1]]; // 只取捕获组的内容
     console.log(imgTagRegex, matches)
 
@@ -408,7 +408,7 @@ const imgTagRegex = /<[\s\r\n]*img(?!(?:(?!>).)*?current_datetime\s*=\s*"[^"]*20
                             // Find the original image tag in the message
                             const originalTag = message.mes.match(imgTagRegex)[0];
                             // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" current_datetime="2025100522${i}">`;
+                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt},dmzz" >`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
