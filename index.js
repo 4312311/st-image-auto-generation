@@ -420,7 +420,7 @@ const chars = [...randomLetters, 'j'].sort(() => Math.random() - 0.5);
 const randomChars = chars.join('');
 
 // 生成最终的img标签
-const newImageTag = `<img src="${imageUrl}" prompt="${prompt},${randomChars}" >`;
+const newImageTag = `<img src="${imageUrl}" prompt="${prompt}dmzz" >`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
