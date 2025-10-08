@@ -407,7 +407,8 @@ async function handleIncomingMessage() {
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
                             // Find the original image tag in the message
                             const originalTag = message.mes.match(imgTagRegex)[0];
-                            // Replace it with an actual image tag
+                            alert(originalTag)
+							// Replace it with an actual image tag
 
 							// 1. 生成5位字符数组：包含1个固定'z' + 4个随机小写字母（a-z，可含重复）
 const chars = [
@@ -423,7 +424,8 @@ const dmzzStr = `dmzz_${chars.join('')}`;
 
 // 4. 生成最终img标签
 const newImageTag = `<img src="${imageUrl}" prompt="${prompt},${dmzzStr}" >`;
-message.mes = message.mes.replace(originalTag, newImageTag);
+alert(newImageTag)
+							message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
                             updateMessageBlock(context.chat.length - 1, message);
