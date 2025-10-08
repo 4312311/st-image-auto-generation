@@ -408,7 +408,12 @@ async function handleIncomingMessage() {
                             // Find the original image tag in the message
                             const originalTag = message.mes.match(imgTagRegex)[0];
                             // Replace it with an actual image tag
-                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt},dmzz" >`;
+							// 生成4位随机小写英文字符（a-z）
+const randomChars = Array.from({ length: 4 }, () => 
+  String.fromCharCode(Math.floor(Math.random() * 26) + 97) // 97是'a'的ASCII码，26个字母
+).join('');
+							
+                           const newImageTag = `<img src="${imageUrl}" prompt="${prompt},${randomChars}" >`;
                             message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
