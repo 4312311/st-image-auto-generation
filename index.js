@@ -276,10 +276,13 @@ async function handleIncomingMessage() {
     }
 
     // 使用正则表达式search
-    const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
+    const imgTagRegex = /<img\b(?=(?:(?!dmzz).)*?prompt="((?:(?!dmzz).)*?)")[^>]*>/g;
     // const testRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
     let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)].map(match => match[1]) : [message.mes.match(imgTagRegex)[1]]; // 只取捕获组的内容
     console.log(imgTagRegex, matches)
+    if(matches.length == 0){
+         toastr.success( message.mes ? message.mes.substring(0, 1000) : '');
+    }
     if (matches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
         setTimeout(async () => {
