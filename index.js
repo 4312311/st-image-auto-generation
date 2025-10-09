@@ -316,7 +316,6 @@ eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function (eventDa
         toastr.error(`提示词注入错误: ${error}`);
     }
 });
-
 // 监听消息接收事件
 eventSource.on(event_types.MESSAGE_RECEIVED, handleIncomingMessage);
 async function handleIncomingMessage() {
@@ -341,16 +340,15 @@ async function handleIncomingMessage() {
         return;
     }
 
-    // 使用正则表达式search
+    // 使用正则表达式search，获取完整匹配对象（含完整标签+捕获组）
     const imgTagRegex = regexFromString(extension_settings[extensionName].promptInjection.regex);
-//const imgTagRegex = /<[\s\r\n]*img(?!(?:(?!>).)*?current_datetime\s*=\s*"[^"]*2025100522[^"]*")[^>]*?prompt\s*=\s*"([^"]*)"[^>]*?>/gis;
-	let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)].map(match => match[1]) : [message.mes.match(imgTagRegex)[1]]; // 只取捕获组的内容
+    // 核心修改：删除.map(match => match[1])，保留完整匹配信息，无需后续重复match
+    let matches = imgTagRegex.global ? [...message.mes.matchAll(imgTagRegex)] : [message.mes.match(imgTagRegex)]; 
     console.log(imgTagRegex, matches)
 
-	if(matches.length ===0){
-	   toastr.success(message.mes);
-
-	}
+    if(matches.length === 0){
+        toastr.success(message.mes);
+    }
     if (matches.length > 0) {
         // 延迟执行图片生成，确保消息首先显示出来
         setTimeout(async () => {
@@ -378,9 +376,11 @@ async function handleIncomingMessage() {
                 // 获取消息元素用于稍后更新
                 const messageElement = $(`.mes[mesid="${context.chat.length - 1}"]`);
 
-                // 处理每个匹配的图片标签
+                // 处理每个匹配的图片标签：直接从预存的matches中取数据，无重复match
                 for (let i = 0; i < matches.length; i++) {
-                    const prompt = matches[i];
+                    // 核心修改：从完整匹配对象中直接提取，无需再调用message.mes.match()
+                    const prompt = matches[i][1]; // 匹配对象的[1]为捕获组内容（即图片prompt）
+                    const originalTag = matches[i][0]; // 匹配对象的[0]为完整匹配标签（用于后续替换）
 
                     // @ts-ignore
                     const result = await SlashCommandParser.commands['sd'].callback({ quiet: insertType === INSERT_TYPE.NEW_MESSAGE ? 'false' : 'true' }, prompt);
@@ -405,27 +405,9 @@ async function handleIncomingMessage() {
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
                         if (typeof imageUrl === 'string' && imageUrl.trim().length > 0) {
-                            // Find the original image tag in the message
-                            const originalTag = message.mes.match(imgTagRegex)[0];
-                            alert(originalTag)
-							// Replace it with an actual image tag
-
-							// 1. 生成5位字符数组：包含1个固定'z' + 4个随机小写字母（a-z，可含重复）
-const chars = [
-  'z', // 固定字母z
-  ...Array.from({ length: 4 }, () => String.fromCharCode(Math.floor(Math.random() * 26) + 97)) // 4个随机小写字母
-];
-
-// 2. 随机打乱数组顺序，确保z的位置不固定
-chars.sort(() => Math.random() - 0.5);
-
-// 3. 拼接成"dmzz_5位字符"格式（如dmzz_zhjuy、dmzz_cdyjz）
-const dmzzStr = `dmzz_${chars.join('')}`;
-
-// 4. 生成最终img标签
-const newImageTag = `<img src="${imageUrl}" prompt="${prompt},${dmzzStr}" >`;
-alert(newImageTag)
-							message.mes = message.mes.replace(originalTag, newImageTag);
+                            // 直接使用预存的originalTag，无需重复匹配原标签
+                            const newImageTag = `<img src="${imageUrl}" prompt="${prompt}" >`;
+                            message.mes = message.mes.replace(originalTag, newImageTag);
 
                             // Update the message display using updateMessageBlock
                             updateMessageBlock(context.chat.length - 1, message);
@@ -437,7 +419,7 @@ alert(newImageTag)
 
                 }
 
-				 // 1. 先通过正则名称查找ID（这里假设要操作的正则名称是"状态栏美化"，可根据实际修改）
+                // 1. 先通过正则名称查找ID（这里假设要操作的正则名称是"状态栏美化"，可根据实际修改）
                 const targetRegexName = "状态栏美化"; // 替换为你的正则脚本名称
                 const targetRegexId = findGlobalRegexIdByName(targetRegexName);
 
@@ -456,3 +438,7 @@ alert(newImageTag)
         }, 0); //防阻塞UI渲染
     }
 }
+
+
+
+
