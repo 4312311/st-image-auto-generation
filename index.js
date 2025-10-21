@@ -444,7 +444,16 @@ async function handleIncomingMessage() {
                         }
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
-                        alert(imageUrl)
+            
+
+
+
+
+
+
+
+
+                            
                         if (
                             typeof imageUrl === 'string' &&
                             imageUrl.trim().length > 0
@@ -468,7 +477,7 @@ const imgReg = regexFromString(extension_settings[extensionName].promptInjection
 // 修改后的代码
 const regexStr = imgReg.toString(); // 将正则对象转为字符串以便判断
 const newImageTag = regexStr.includes('video') 
-    ? `<video src="${escapedUrl}" prompt="${escapeHtmlAttribute(escapedPrompt)}" controls>` 
+    ? `<video src="${escapedUrl}" prompt="${escapeHtmlAttribute(escapedPrompt)}" style="width: 100%; height: auto;" controls>` 
     : `<img src="${escapedUrl}" prompt="${escapeHtmlAttribute(escapedPrompt)}">`;
 
 
