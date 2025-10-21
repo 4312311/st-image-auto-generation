@@ -444,6 +444,7 @@ async function handleIncomingMessage() {
                         }
                     } else if (insertType === INSERT_TYPE.REPLACE) {
                         let imageUrl = result;
+                        alert(imageUrl)
                         if (
                             typeof imageUrl === 'string' &&
                             imageUrl.trim().length > 0
