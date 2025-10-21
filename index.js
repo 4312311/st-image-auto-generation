@@ -457,7 +457,6 @@ async function handleIncomingMessage() {
                             // Replace it with an actual image tag
                             const escapedUrl = escapeHtmlAttribute(imageUrl);
                             const escapedPrompt = escapeHtmlAttribute(prompt);
-                            const newImageTag = `<img src="${escapedUrl}" title="${escapedPrompt}" alt="${escapedPrompt}">`;
 // 假设在REPLACE模式的标签替换逻辑中，存在类似如下代码
 // 先获取配置中的正则表达式并编译
 const imgReg = regexFromString(extension_settings[extensionName].promptInjection.regex);
